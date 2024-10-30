@@ -3,7 +3,8 @@ from django.urls import reverse
 from simple_history.models import HistoricalRecords
 
 class Category(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Название")
+    name = models.CharField(max_length=200, verbose_name="Название",
+                            unique=True)
     slug = models.SlugField(max_length=200,
                             unique=True)
     history = HistoricalRecords()
@@ -24,7 +25,8 @@ class Category(models.Model):
                        args=[self.slug])
 
 class Brand(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Название")
+    name = models.CharField(max_length=200, verbose_name="Название",
+                            unique=True)
     slug = models.SlugField(max_length=200,
                             unique=True)
     history = HistoricalRecords()
@@ -54,9 +56,11 @@ class Product(models.Model):
                                  on_delete=models.CASCADE, 
                                  verbose_name="Бренд")                             
     name = models.CharField(max_length=200, 
-                                 verbose_name="Название")
+                                 verbose_name="Название",
+                                 unique=True)
     slug = models.SlugField(max_length=200, 
-                                 verbose_name="Метка", unique=True)
+                                 verbose_name="Метка", 
+                                 unique=True)
     image = models.ImageField(upload_to='products/%Y/%m/%d',
                               blank=True, 
                                  verbose_name="Изображение")
