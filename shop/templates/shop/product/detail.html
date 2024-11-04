@@ -17,4 +17,39 @@
     <p class="price">{{ product.price }} ₽</p>
     {{ product.description|linebreaks }}
   </div>
+	
+	{% if products_sale1 %}
+    <div class="recommendations"> 
+      <h2>Акция! Утюги Philips и Tefal до 7000 рублей </h2> 
+      {% for product in products_sale1 %}
+        <div class="item">
+          <a href="{{ product.get_absolute_url }}">
+            <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}" alt="{{ product.name }}">
+          </a>
+					<br>
+          <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+          <br>
+          {{ product.price }} ₽
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+	
+	{% if products_sale2 %}
+    <div class="recommendations"> 
+      <h2>Новинки к чёрной пятнице! Холодильники и микроволновки по низким ценам!</h2> 
+      {% for product in products_sale2 %}
+        <div class="item">
+          <a href="{{ product.get_absolute_url }}">
+            <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}" alt="{{ product.name }}">
+          </a>
+					<br>
+          <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+          <br>
+          {{ product.price }} ₽
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
 {% endblock %}
