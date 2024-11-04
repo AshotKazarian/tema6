@@ -64,27 +64,12 @@ def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug, available=True)
     
     
-    # Q запросы
-    category_sale1 = get_object_or_404(Category, name='Утюги')
-    brand_sale11 = get_object_or_404(Brand, name='Philips')
-    brand_sale12 = get_object_or_404(Brand, name='Tefal')
-    products_sale1 = Product.objects.filter( Q(category=category_sale1) & 
-    (Q(brand=brand_sale11) | Q(brand=brand_sale12)) &~
-    Q(price__gte=7000) )
-  
     
-    category_sale21 = get_object_or_404(Category, name='Холодильники')
-    category_sale22 = get_object_or_404(Category, name='Микроволновки')
-    products_sale2 = Product.objects.filter( Q(created__gte=timezone.now() - timezone.timedelta(days=2)) &
-    Q(category=category_sale21) & Q(price__lte=100000) |
-    Q(category=category_sale22) & Q(price__lte=13000))
 
 
     return render(request,
                   'shop/product/detail.html',
-                  {'product': product, 
-                  'products_sale1': products_sale1,
-                  'products_sale2': products_sale2})
+                  {'product': product,})
 
 
 # API
@@ -127,6 +112,33 @@ class ProductViewSet(viewsets.ModelViewSet):
       'Нет в наличии': unavailable_count,
       'Статистика по категориям': category_count,
       'Статистика по брендам': brand_count,
+    })
+    
+    @action(methods=['GET'], detail=False)
+    def sale(self, request):
+
+        category_sale1 = get_object_or_404(Category, name='Утюги')
+        brand_sale11 = get_object_or_404(Brand, name='Philips')
+        brand_sale12 = get_object_or_404(Brand, name='Tefal')
+        products_sale1 = Product.objects.filter( Q(category=category_sale1) & 
+        (Q(brand=brand_sale11) | Q(brand=brand_sale12)) &~
+        Q(price__gte=7000) )
+  
+    
+        category_sale21 = get_object_or_404(Category, name='Холодильники')
+        category_sale22 = get_object_or_404(Category, name='Микроволновки')
+        products_sale2 = Product.objects.filter( Q(created__gte=timezone.now() - timezone.timedelta(days=1)) &
+        ((Q(category=category_sale21) & Q(price__lte=100000)) |
+        (Q(category=category_sale22) & Q(price__lte=13000)))
+        )
+    
+    # Сериализация объектов Product
+        serializer1 = ProductSerializer(products_sale1, many=True)
+        serializer2 = ProductSerializer(products_sale2, many=True)
+
+        return Response({
+              'Акция 1: Утюги Philips и Tefal не дороже 7000': serializer1.data,
+              'Акция 2: Холодильники не дороже 100000 и микроволновки не дороже 13000. Дата добавления товара: последние 2 дня': serializer2.data
     })
          
          
