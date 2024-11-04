@@ -93,7 +93,7 @@ from .serializers import ProductSerializer, CategorySerializer, BrandSerializer
 from rest_framework.filters import SearchFilter #, OrderingFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from random import choice
+from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 
@@ -113,51 +113,29 @@ class ProductViewSet(viewsets.ModelViewSet):
     filterset_class = ProductFilter
     
     @action(methods=['GET'], detail=False)
-    def available(self, request):
-        """Товары в наличии."""
-        available_products = self.get_queryset().filter(available=True)
-        serializer = self.get_serializer(available_products, many=True)
-        return Response(serializer.data)
-        
-    @action(methods=['GET'], detail=False)
-    def unavailable(self, request):
-        """Товары не в наличии."""
-        unavailable_products = self.get_queryset().filter(available=False)
-        serializer = self.get_serializer(unavailable_products, many=True)
-        return Response(serializer.data)        
-    
+    def statistics(self, request):
+        """Сводная статистика."""
+        all_count = self.get_queryset().count()
+        available_count = self.get_queryset().filter(available=True).count()
+        unavailable_count = self.get_queryset().filter(available=False).count()
+        category_count = self.get_queryset().values('category__name').annotate(count=Count('id'))
+        brand_count = self.get_queryset().values('brand__name').annotate(count=Count('id'))
 
-
+        return Response({
+      'Всего товаров': all_count,
+      'В наличии': available_count,
+      'Нет в наличии': unavailable_count,
+      'Статистика по категориям': category_count,
+      'Статистика по брендам': brand_count,
+    })
+         
+         
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer 
     filter_backends = [SearchFilter]
     search_fields = ['name']
-    
-    @action(methods=['GET'], detail=True)
-    def random_product(self, request, pk=None):
-        """Случайный товар из выбранной категории."""
-        category = self.get_object() 
-        products = category.products.all()
-        if products.exists():
-            random_product = choice(products)
-            serializer = ProductSerializer(random_product)
-            return Response(serializer.data)
-        else:
-            return Response({'detail': 'Нет товаров выбранной категории'}, status=404)
      
-    @action(methods=['POST'], detail=True)
-    def update_category_info(self, request, pk=None):
-        """Обновление данных категории"""
-        category = self.get_object()
-        name = request.data.get('name')
-        slug = request.data.get('slug')
-        category.name = name
-        category.slug = slug
-
-
-        category.save()
-        return Response({'detail': 'Информация о категории обновлена'}, status=200)
     
 class BrandViewSet(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
@@ -165,27 +143,4 @@ class BrandViewSet(viewsets.ModelViewSet):
     filter_backends = [SearchFilter]
     search_fields = ['name']
     
-    @action(methods=['GET'], detail=True)
-    def random_product(self, request, pk=None):
-        """Случайный товар из выбранного бренда."""
-        brand = self.get_object() 
-        products = brand.products.all()
-        if products.exists():
-            random_product = choice(products)
-            serializer = ProductSerializer(random_product)
-            return Response(serializer.data)
-        else:
-            return Response({'detail': 'Нет товаров выбранного бренда'}, status=404)
-            
-    @action(methods=['POST'], detail=True)
-    def update_brand_info(self, request, pk=None):
-        """Обновление данных бренда"""
-        brand = self.get_object()
-        name = request.data.get('name')
-        slug = request.data.get('slug')
-        brand.name = name
-        brand.slug = slug
-
-
-        brand.save()
-        return Response({'detail': 'Информация о бренде обновлена'}, status=200)
+          

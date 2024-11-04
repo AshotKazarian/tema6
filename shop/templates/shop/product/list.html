@@ -35,9 +35,15 @@
   </div>
   <div id="main" class="product-list">
 	
+
+	
+	
     <h1>
   {% if category %}{{ category.name }}{% elif brand %}{{ brand.name }}{% else %}Каталог{% endif %}
 	  </h1>
+		
+		
+		
 
     {% for product in products %}
       <div class="item">
@@ -49,6 +55,8 @@
         {{ product.price }} ₽
       </div>
     {% endfor %}
+		
+		
 		
 		{% if products.has_other_pages %}
       <ul class="pagination">
@@ -63,6 +71,9 @@
         {% endif %}
       </ul>
     {% endif %}
+	
+
+  
 		
 		</div>
 		
