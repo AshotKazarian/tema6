@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'simple_history',
     'django_filters',
+    'import_export',
 ]
 
 # SIMPLE_HISTORY_REVERT_DISABLED = True
