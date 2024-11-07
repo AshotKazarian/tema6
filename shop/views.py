@@ -81,6 +81,7 @@ from rest_framework.response import Response
 from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
+from rest_framework import serializers
 
 class ProductFilter(django_filters.FilterSet):
   min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
@@ -90,6 +91,16 @@ class ProductFilter(django_filters.FilterSet):
     model = Product
     fields = ['category', 'brand', 'available', 'min_price', 'max_price']
     
+class ProductPriceSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Product
+            fields = ['price']
+            
+        def validate_price(self, value):
+            if value <0:
+                raise serializers.ValidationError("Цена не может быть меньше нуля.")
+            return value 
+
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer 
@@ -114,6 +125,7 @@ class ProductViewSet(viewsets.ModelViewSet):
       'Статистика по брендам': brand_count,
     })
     
+        
     @action(methods=['GET'], detail=False)
     def sale(self, request):
 
@@ -140,6 +152,28 @@ class ProductViewSet(viewsets.ModelViewSet):
               'Акция 1: Утюги Philips и Tefal не дороже 7000': serializer1.data,
               'Акция 2: Холодильники не дороже 100000 и микроволновки не дороже 13000. Дата добавления товара: последние 2 дня': serializer2.data
     })
+    
+    @action(methods=['POST'], detail=True)
+    def change_price(self, request, pk=None):
+        """
+        Изменяет цену товара.
+        """
+        product = self.get_object()
+        serializer = ProductPriceSerializer(product, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Цена товара изменена."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_serializer_class(self):
+        """
+        Возвращает сериализатор, который нужно использовать для действия "change_price".
+        """
+        if self.action == 'change_price':
+            return ProductPriceSerializer
+        return super().get_serializer_class()
+        
+    
          
          
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -156,3 +190,25 @@ class BrandViewSet(viewsets.ModelViewSet):
     search_fields = ['name']
     
           
+# В ProductViewSet вы не пишете эти методы явно, так как они уже определены в ModelViewSet:
+
+# - get (GET):  Получение списка продуктов или одного продукта по ID.
+# - post (POST): Создание нового продукта.
+# - put (PUT): Обновление существующего продукта.
+# - delete (DELETE): Удаление продукта по ID.
+
+# ModelViewSet автоматически обрабатывает эти методы, используя сериализатор ProductSerializer, который вы определили. 
+
+# Вот как работают эти методы в ProductViewSet:
+
+# 1. get: 
+    # - Если запрос содержит pk (ID продукта), метод retrieve (получение по ID) будет вызван, и вы получите один продукт. 
+    # - Если pk отсутствует, будет вызван метод list (получение списка), и вы получите список всех продуктов.
+# 2. post: Метод create (создание) вызывается для создания нового продукта, используя данные из request.data.
+# 3. put: Метод update (обновление) вызывается для обновления существующего продукта с pk.
+# 4. delete: Метод destroy (удаление) вызывается для удаления продукта с pk.
+
+# В итоге:
+
+# Вам не нужно писать эти методы вручную, когда вы используете ModelViewSet. Он автоматически предоставляет вам функциональность 
+# для CRUD-операций (создание, чтение, обновление, удаление) с вашей моделью Product.
