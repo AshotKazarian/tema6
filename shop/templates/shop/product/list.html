@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  {% if category %}{{ category.name }} | Магазин бытовой техники{% elif brand %}{{ brand.name }} | Магазин бытовой техники{% else %}Каталог | Магазин Электроники{% endif %}
+  {% if category %}{{ category.name }} | Магазин бытовой техники{% elif brand %}{{ brand.name }} | Магазин бытовой техники{% else %}Каталог | Магазин бытовой техники{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -35,20 +35,14 @@
   </div>
   <div id="main" class="product-list">
 	
-
-	
-	
     <h1>
   {% if category %}{{ category.name }}{% elif brand %}{{ brand.name }}{% else %}Каталог{% endif %}
 	  </h1>
-		
-		
-		
 
     {% for product in products %}
       <div class="item">
         <a href="{{ product.get_absolute_url }}">
-          <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}" alt="{{ product.name }}">
+          <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}" alt="Фото {{ product.name }}">
         </a>
         <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
         <br>
@@ -57,8 +51,7 @@
     {% endfor %}
 		
 		
-		
-		{% if products.has_other_pages %}
+		<!-- {% if products.has_other_pages %}
       <ul class="pagination">
         {% if products.has_previous %}
           <li><a href="{% url 'shop:product_list' %}?page={{ products.previous_page_number }}&{% if category_slug %}category={{ category_slug }}&{% endif %}{% if brand_slug %}brand={{ brand_slug }}&{% endif %}">&laquo;</a></li>
@@ -70,7 +63,7 @@
           <li><a href="{% url 'shop:product_list' %}?page={{ products.next_page_number }}&{% if category_slug %}category={{ category_slug }}&{% endif %}{% if brand_slug %}brand={{ brand_slug }}&{% endif %}">&raquo;</a></li>
         {% endif %}
       </ul>
-    {% endif %}
+    {% endif %} -->
 	
 
   
