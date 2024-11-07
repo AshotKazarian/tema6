@@ -13,8 +13,8 @@ urlpatterns = [
     path('', views.product_list, name='product_list'), 
     path('category/<slug:category_slug>/', views.product_list, name='product_list_by_category'), 
     path('brand/<slug:brand_slug>/', views.product_list, name='product_list_by_brand'), 
-    path('api/', include(router.urls)),  # Маршрут для API
-    path('<slug:slug>/', views.product_detail, name='product_detail'),  # Детальная страница
+    path('api/', include(router.urls)),
+    path('<slug:slug>/', views.product_detail, name='product_detail'),
 ]
 
 # router.urls  уже содержит маршруты для  products, brands и categories, которые 
