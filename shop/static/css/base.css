@@ -152,6 +152,8 @@ ul.errorlist {
     width:220px;
     padding:30px 20px 0 0;
     float:left;
+		left: 0;
+		/* position: fixed; */
 }
 
 #sidebar ul{
@@ -185,6 +187,10 @@ ul.errorlist {
     overflow:hidden;
 }
 
+/* .product-list {
+    margin-left: 220px;
+  } */
+	
 .product-list .item {
     width:25%;
     padding:10px 20px;
