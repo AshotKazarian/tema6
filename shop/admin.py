@@ -5,6 +5,7 @@
 from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin, ExportActionMixin
+from django.utils.safestring import mark_safe
 from .models import Category, Brand, Product
 
 
@@ -108,6 +109,7 @@ class ProductAdmin(ImportExportModelAdmin, ExportActionMixin):
         "price",
         "brand",
         "category",
+        "image_visible",
         "available",
         "updated",
         "get_short_description",
@@ -139,3 +141,12 @@ class ProductAdmin(ImportExportModelAdmin, ExportActionMixin):
             if len(obj.description) > 50
             else obj.description
         )
+    def image_visible(self, obj):
+        """
+        Позволяет просматривать изображение товара непосредственно в панели администратора
+        """
+        if obj.image:
+            return mark_safe("<img src='{}' width='80' />".format(obj.image.url))
+        return "Нет изображения"
+    image_visible.__name__ = "Изображение"
+    
