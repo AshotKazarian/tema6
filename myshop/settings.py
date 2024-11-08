@@ -1,3 +1,6 @@
+"""
+Настройки Django для django проекта.
+"""
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -14,7 +17,6 @@ SECRET_KEY = 'django-insecure-+(@clydi&^06dxoa98e^xudb%cuw)!ju=!j-kxww^!g%jq1&v9
 DEBUG = True
 
 ALLOWED_HOSTS = []
- 
 # Application definition
 
 INSTALLED_APPS = [

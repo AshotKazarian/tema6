@@ -1,24 +1,37 @@
-from django.shortcuts import render, get_object_or_404 # для рендеринга шаблонов и получения объектов из базы данных.
-from .models import Category, Product, Brand
+"""
+Представления для приложения shop.
+"""
+import django_filters
+from rest_framework import viewsets, serializers, status
+from rest_framework.filters import SearchFilter  # , OrderingFilter
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.db.models import Count, Q
+from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import render, get_object_or_404
+# для рендеринга шаблонов и получения объектов из базы данных.
 # from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from rest_framework.views import APIView # для создания API-представлений
-from rest_framework.response import Response # для создания ответов API
-from rest_framework import status # Импортирует статусы HTTP-ответов
-from .serializers import ProductSerializer
-from django.db.models import Q
 from django.utils import timezone
+from .models import Category, Product, Brand
+from .serializers import ProductSerializer, CategorySerializer, BrandSerializer
 
 
 # Функция отображения товаров на главной странице
 def product_list(request, category_slug=None, brand_slug=None):
+    """
+    Отображает список продуктов.
+
+    Эта функция фильтрует продукты по категории и бренду,
+    а также отображает список всех категорий и брендов.
+  """
     category = None
     brand = None
     categories = Category.objects.all()
     brands = Brand.objects.all()
     products = Product.objects.filter(available=True)
 
-    category_slug = request.GET.get('category', category_slug)
-    brand_slug = request.GET.get('brand', brand_slug)
+    category_slug = request.GET.get("category", category_slug)
+    brand_slug = request.GET.get("brand", brand_slug)
 
     if category_slug:
         category = get_object_or_404(Category, slug=category_slug)
@@ -32,114 +45,166 @@ def product_list(request, category_slug=None, brand_slug=None):
 
     # page = request.GET.get('page') # Получаем номер текущей страницы
     # try:
-        # products = paginator.page(page)
+    # products = paginator.page(page)
     # except PageNotAnInteger:
-        # # Если номер страницы не целое число, показываем первую страницу
-        # products = paginator.page(1)
+    # # Если номер страницы не целое число, показываем первую страницу
+    # products = paginator.page(1)
     # except EmptyPage:
-        # # Если номер страницы превышает максимальное число страниц, 
-        # # показываем последнюю страницу
-        # products = paginator.page(paginator.num_pages)
+    # # Если номер страницы превышает максимальное число страниц,
+    # # показываем последнюю страницу
+    # products = paginator.page(paginator.num_pages)
 
     context = {
-        'category': category,
-        'categories': categories,
-        'brand': brand,
-        'brands': brands,
-        'products': products,
-        'category_slug': category_slug, 
-        'brand_slug': brand_slug,
+        "category": category,
+        "categories": categories,
+        "brand": brand,
+        "brands": brands,
+        "products": products,
+        "category_slug": category_slug,
+        "brand_slug": brand_slug,
         # 'page': page,                 # Добавляем page в контекст
     }
-    return render(request, 'shop/product/list.html', context)
+    return render(request, "shop/product/list.html", context)
+
 
 # Функция отображения одного товара
 def product_detail(request, slug):
+    """
+    Отображает информацию о продукте.
+
+    Эта функция получает информацию о продукте по его slug 
+    и отображает ее на странице detail.html.
+    """
     product = get_object_or_404(Product, slug=slug, available=True)
-    
-    return render(request,
-                  'shop/product/detail.html',
-                  {'product': product,})
+
+    return render(
+        request,
+        "shop/product/detail.html",
+        {
+            "product": product,
+        },
+    )
 
 
 # API
-from rest_framework import viewsets # для создания API-представлений.
-from .serializers import ProductSerializer, CategorySerializer, BrandSerializer 
-from rest_framework.filters import SearchFilter #, OrderingFilter
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from django.db.models import Count
-from django_filters.rest_framework import DjangoFilterBackend
-import django_filters
-from rest_framework import serializers # для создания собственных сериализаторов
-
 class ProductFilter(django_filters.FilterSet):
-  min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
-  max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
+    """
+    Фильтр для модели Product.
 
-  class Meta:
-    model = Product
-    fields = ['category', 'brand', 'available', 'min_price', 'max_price']
-    
+    Позволяет фильтровать товары по категории, бренду, доступности, 
+    а также минимальной и максимальной цене.
+    """
+    min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
+    max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
+
+    class Meta:
+        """
+        Метаданные для фильтра.
+        
+        model:  Указывает, к какой модели применяется фильтр.
+        fields:  Указывает, какие поля модели должны быть отфильтрованы.
+        """
+        model = Product
+        fields = ["category", "brand", "available", "min_price", "max_price"]
+
+
 class ProductPriceSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = Product
-            fields = ['price']
-            
-        def validate_price(self, value):
-            if value <0:
-                raise serializers.ValidationError("Цена не может быть меньше нуля.")
-            return value 
+    """
+    Сериализатор для модели Product, 
+    используемый для изменения цены.
+
+    Ограничивает цену, чтобы она была не меньше нуля.
+    """
+    class Meta:
+        """
+        Метаданные для сериализатора.
+        
+        model:  Указывает, к какой модели применяется сериализатор.
+        fields:  Указывает, какие поля модели должны быть сериализованы.
+        """
+        model = Product
+        fields = ["price"]
+
+    def validate_price(self, value):
+        """
+        Проверяет, что цена не меньше нуля.
+        """
+        if value < 0:
+            raise serializers.ValidationError("Цена не может быть меньше нуля.")
+        return value
+
 
 class ProductViewSet(viewsets.ModelViewSet):
+    """
+    API-представление для модели Product.
+
+    Предоставляет CRUD-операции, 
+    а также действия для статистики 
+     и изменения цены.
+     """
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer 
-    filter_backends = [SearchFilter, DjangoFilterBackend] # , OrderingFilter
-    search_fields = ['name', 'description']
+    serializer_class = ProductSerializer
+    filter_backends = [SearchFilter, DjangoFilterBackend]  # , OrderingFilter
+    search_fields = ["name", "description"]
     filterset_class = ProductFilter
-    
-    @action(methods=['GET'], detail=False)
+
+    @action(methods=["GET"], detail=False)
     def statistics(self, request):
-        """Сводная статистика."""
+        """
+        Сводная статистика.
+        """
         all_count = self.get_queryset().count()
         available_count = self.get_queryset().filter(available=True).count()
         unavailable_count = self.get_queryset().filter(available=False).count()
-        category_count = self.get_queryset().values('category__name').annotate(count=Count('id'))
-        brand_count = self.get_queryset().values('brand__name').annotate(count=Count('id'))
+        category_count = (
+            self.get_queryset().values("category__name").annotate(count=Count("id"))
+        )
+        brand_count = (
+            self.get_queryset().values("brand__name").annotate(count=Count("id"))
+        )
 
-        return Response({
-      'Всего товаров': all_count,
-      'В наличии': available_count,
-      'Нет в наличии': unavailable_count,
-      'Статистика по категориям': category_count,
-      'Статистика по брендам': brand_count,
-    })
-    
-        
-    @action(methods=['GET'], detail=False)
+        return Response(
+            {
+                "Всего товаров": all_count,
+                "В наличии": available_count,
+                "Нет в наличии": unavailable_count,
+                "Статистика по категориям": category_count,
+                "Статистика по брендам": brand_count,
+            }
+        )
+
+    @action(methods=["GET"], detail=False)
     def sale(self, request):
+        """
+        Просмотр товаров по акции.
+        """
+        products_sale1 = Product.objects.filter(
+            Q(category__name="Утюги")
+            & (Q(brand__name="Philips") | Q(brand__name="Tefal"))
+            & ~Q(price__gte=7000)
+        )
 
-        products_sale1 = Product.objects.filter( Q(category__name='Утюги') & 
-                                               ( Q(brand__name='Philips') | Q(brand__name='Tefal') ) &
-                                               ~Q(price__gte=7000) )
-   
-        products_sale2 = Product.objects.filter( Q(updated__gte= timezone.now() - timezone.timedelta(days=2)) & (
-                                                   ( Q(category__name='Холодильники') & Q(price__lte=100000) ) |
-                                                   ( Q(category__name='Микроволновки') & Q(price__lte=13000) )
-                                                    )
-)
-   
-    
-    # Сериализация объектов Product
+        products_sale2 = Product.objects.filter(
+            Q(updated__gte=timezone.now() - timezone.timedelta(days=2))
+            & (
+                (Q(category__name="Холодильники") & Q(price__lte=100000))
+                | (Q(category__name="Микроволновки") & Q(price__lte=13000))
+            )
+        )
+
+        # Сериализация объектов Product
         serializer1 = ProductSerializer(products_sale1, many=True)
         serializer2 = ProductSerializer(products_sale2, many=True)
 
-        return Response({
-              'Акция 1: Утюги Philips и Tefal не дороже 7000': serializer1.data,
-              'Акция 2: Холодильники не дороже 100000 и микроволновки не дороже 13000. Дата обновления товара: последние 2 дня': serializer2.data
-    })
-    
-    @action(methods=['POST'], detail=True)
+        return Response(
+            {
+                "Акция 1: Утюги Philips и Tefal не дороже 7000": serializer1.data,
+                "Акция 2: Холодильники не дороже 100000 и микроволновки не дороже 13000. \
+                Дата обновления товара: последние 2 дня": serializer2.data,
+            }
+        )
+
+    @action(methods=["POST"], detail=True)
     def change_price(self, request, pk=None):
         """
         Изменяет цену товара.
@@ -148,33 +213,46 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductPriceSerializer(product, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Цена товара изменена."}, status=status.HTTP_200_OK)
+            return Response(
+                {"message": "Цена товара изменена."}, status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_serializer_class(self):
         """
         Возвращает сериализатор, который нужно использовать для действия "change_price".
         """
-        if self.action == 'change_price':
+        if self.action == "change_price":
             return ProductPriceSerializer
         return super().get_serializer_class()
-          
+
+
 class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    API-представление для модели Category.
+
+    Предоставляет CRUD-операции.
+    """
     queryset = Category.objects.all()
-    serializer_class = CategorySerializer 
+    serializer_class = CategorySerializer
     filter_backends = [SearchFilter]
-    search_fields = ['name']
-     
-    
+    search_fields = ["name"]
+
+
 class BrandViewSet(viewsets.ModelViewSet):
+    """
+    API-представление для модели Brand.
+
+    Предоставляет CRUD-операции.
+  """
     queryset = Brand.objects.all()
-    serializer_class = BrandSerializer 
+    serializer_class = BrandSerializer
     filter_backends = [SearchFilter]
-    search_fields = ['name']
- 
- 
-# CRUD-операции (создание, чтение, обновление, удаление) 
-          
+    search_fields = ["name"]
+
+
+# CRUD-операции (создание, чтение, обновление, удаление)
+
 # В ProductViewSet вы не пишете эти методы явно, так как они уже определены в ModelViewSet:
 
 # - get (GET):  Получение списка продуктов или одного продукта по ID.
@@ -182,9 +260,12 @@ class BrandViewSet(viewsets.ModelViewSet):
 # - put (PUT): Обновление существующего продукта.
 # - delete (DELETE): Удаление продукта по ID.
 
-# 1. get: 
-    # - Если запрос содержит pk (ID продукта), метод retrieve (получение по ID) будет вызван, и вы получите один продукт. 
-    # - Если pk отсутствует, будет вызван метод list (получение списка), и вы получите список всех продуктов.
-# 2. post: Метод create (создание) вызывается для создания нового продукта, используя данные из request.data.
+# 1. get:
+# - Если запрос содержит pk (ID продукта), метод retrieve (получение по ID) будет вызван,
+# и вы получите один продукт.
+# - Если pk отсутствует, будет вызван метод list (получение списка), и вы получите список
+# всех продуктов.
+# 2. post: Метод create (создание) вызывается для создания нового продукта, используя
+# данные из request.data.
 # 3. put: Метод update (обновление) вызывается для обновления существующего продукта с pk.
 # 4. delete: Метод destroy (удаление) вызывается для удаления продукта с pk.
