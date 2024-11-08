@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'simple_history',
     'django_filters',
     'import_export',
+    'drf_yasg',
 ]
 
 # SIMPLE_HISTORY_REVERT_DISABLED = True
