@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django_filters',
     'import_export',
     'drf_yasg',
+    'mailhog',
 ]
 
 # SIMPLE_HISTORY_REVERT_DISABLED = True
@@ -127,7 +128,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 1025  # SMTP port of Mailhog
+EMAIL_USE_TLS = False
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
