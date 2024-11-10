@@ -6,6 +6,18 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+    depends_on:
+      - redis
+      - celery
+  celery:
+     build: .
+     command: celery -A myshop worker -l info -B
+     depends_on:
+      - redis
+     environment:
+      - DJANGO_SETTINGS_MODULE=myshop.settings
+  redis:
+    image: redis:alpine
   mailhog:
     image: mailhog/mailhog:latest
     ports:

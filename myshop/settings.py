@@ -2,6 +2,7 @@
 Настройки Django для django проекта.
 """
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,6 +34,8 @@ INSTALLED_APPS = [
     'import_export',
     'drf_yasg',
     'mailhog',
+    'django_celery_beat',
+    'django_celery_results',
 ]
 
 # SIMPLE_HISTORY_REVERT_DISABLED = True
@@ -134,6 +137,22 @@ EMAIL_HOST = 'localhost'
 EMAIL_PORT = 1025  # SMTP port of Mailhog
 EMAIL_USE_TLS = False
 
+CELERY_BROKER_URL = 'redis://redis:6379'  # Используем Redis как брокер задач
+CELERY_RESULT_BACKEND = 'redis://redis:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_MODULES = ['myshop.tasks.tasks']
+  
+
+
+CELERY_BEAT_SCHEDULE = {
+    'increase-product-price-every-5-seconds': {
+        'task': 'tasks.tasks.increase_product_price',
+        'schedule': 15
+  },
+}
+   
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 2,
