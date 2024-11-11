@@ -7,7 +7,6 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - redis
       - celery
   celery:
      build: .
