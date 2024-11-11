@@ -8,6 +8,8 @@ services:
       - .:/app
     depends_on:
       - celery
+    environment:
+      - DJANGO_SETTINGS_MODULE=myshop.settings
   celery:
      build: .
      command: celery -A myshop worker -l info -B

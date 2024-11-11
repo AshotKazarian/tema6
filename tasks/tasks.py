@@ -8,7 +8,7 @@ def increase_product_price():
         Периодическая задача, увеличивающая цену товара на 
         5 каждые 15 секунд для товаров с брендом (id=1).
         """
-        products = Product.objects.filter(brand="1")
+        products = Product.objects.filter(brand="3")
         for product in products:
             current_price = product.price
             new_price = current_price + 5
