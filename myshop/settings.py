@@ -3,6 +3,7 @@
 """
 from pathlib import Path
 from celery.schedules import crontab
+from datetime import date, timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -154,14 +155,13 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_MODULES = ['myshop.tasks.tasks']
   
-
-
 CELERY_BEAT_SCHEDULE = {
-    'increase-product-price-every-15-seconds': {
-        'task': 'tasks.tasks.increase_product_price',
-        'schedule': 15
-  },
+    'SKIDKA_CHERNAYA_PYATNICA': {
+        'task': 'tasks.tasks.discount_11_11',
+        'schedule': crontab(hour=0, minute=0, day_of_month='11,12', month_of_year='11') 
+    }
 }
+
    
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
