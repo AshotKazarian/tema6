@@ -160,10 +160,14 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'tasks.tasks.discount_11_11',
         'schedule': crontab(hour=0, minute=0, day_of_month='11,12', month_of_year='11') 
     }, 
-    'send_email_every_10_seconds': {
-        'task': 'tasks.tasks.send_email_task',  # Полный путь к вашей задаче
-        'schedule': 10.0,  # Интервал в секундах
-        'args': ['recipient@example.com', 'Тема письма', 'Текст письма'],  # Аргументы задачи
+    'NOVOGODNEE_POZDRAVLENIE': {
+        'task': 'tasks.tasks.send_new_year_email',
+        'schedule': crontab(hour=0, minute=0, day_of_month='31', month_of_year='12'),
+        'args': [
+            'customer@example.com',
+            'Поздравляем с Новым годом!',
+            'Уважаемый клиент! Поздравляем Вас с наступающим Новым годом!'
+        ],
     },
  
 }

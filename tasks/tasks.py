@@ -34,7 +34,7 @@ def discount_11_11():
             print(f"Цена для товара {product.name} восстановлена до {product.price}")
 
 @shared_task
-def send_email_task(recipient_email, subject, message):
+def send_new_year_email(recipient_email, subject, message):
     """
     Отправка письма с помощью Celery.
 
@@ -47,7 +47,7 @@ def send_email_task(recipient_email, subject, message):
     send_mail(
         subject,
         message,
-        'sender@example.com',
+        'kazarian@web365.ru',
         [recipient_email],
         fail_silently=False,
     )
