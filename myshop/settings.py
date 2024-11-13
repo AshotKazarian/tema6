@@ -144,7 +144,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'localhost'
+EMAIL_HOST = '192.168.0.102'
 EMAIL_PORT = 1025  # SMTP port of Mailhog
 EMAIL_USE_TLS = False
 
@@ -159,7 +159,13 @@ CELERY_BEAT_SCHEDULE = {
     'SKIDKA_CHERNAYA_PYATNICA': {
         'task': 'tasks.tasks.discount_11_11',
         'schedule': crontab(hour=0, minute=0, day_of_month='11,12', month_of_year='11') 
-    }
+    }, 
+    'send_email_every_10_seconds': {
+        'task': 'tasks.tasks.send_email_task',  # Полный путь к вашей задаче
+        'schedule': 10.0,  # Интервал в секундах
+        'args': ['recipient@example.com', 'Тема письма', 'Текст письма'],  # Аргументы задачи
+    },
+ 
 }
 
    

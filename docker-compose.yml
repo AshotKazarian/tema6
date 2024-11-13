@@ -9,14 +9,15 @@ services:
     depends_on:
       - celery
       - redis
+      - mailhog
     environment:
       - DJANGO_SETTINGS_MODULE=myshop.settings
   celery:
-     build: .
-     command: celery -A myshop worker -l info -B
-     depends_on:
+    build: .
+    command: celery -A myshop worker -l info
+    depends_on:
       - redis
-     environment:
+    environment:
       - DJANGO_SETTINGS_MODULE=myshop.settings
   redis:
     image: redis:alpine
@@ -25,5 +26,10 @@ services:
     ports:
       - "1025:1025"  # SMTP port
       - "8025:8025"  # Web interface port
+  celerybeat:
+    build: .
+    command: celery -A myshop beat -l info
     depends_on:
-      - web
+      - redis
+    environment:
+      - DJANGO_SETTINGS_MODULE=myshop.settings

@@ -1,3 +1,4 @@
+from django.core.mail import send_mail
 from celery import shared_task
 from shop.models import Product  
 from datetime import date, timedelta
@@ -31,3 +32,24 @@ def discount_11_11():
             product.price += discount
             product.save()
             print(f"Цена для товара {product.name} восстановлена до {product.price}")
+
+@shared_task
+def send_email_task(recipient_email, subject, message):
+    """
+    Отправка письма с помощью Celery.
+
+    Args:
+        recipient_email (str): Адрес получателя письма.
+        subject (str): Тема письма.
+        message (str): Содержимое письма.
+    """
+
+    send_mail(
+        subject,
+        message,
+        'sender@example.com',
+        [recipient_email],
+        fail_silently=False,
+    )
+
+    return f"Письмо отправлено на {recipient_email}"
