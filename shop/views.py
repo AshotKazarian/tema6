@@ -1,6 +1,7 @@
 """
 Представления для приложения shop.
 """
+import time
 import django_filters
 from rest_framework import viewsets, serializers, status
 from rest_framework.filters import SearchFilter  # , OrderingFilter
@@ -11,9 +12,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import render, get_object_or_404
 # для рендеринга шаблонов и получения объектов из базы данных.
 # from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.cache import cache
 from django.utils import timezone
 from .models import Category, Product, Brand
 from .serializers import ProductSerializer, CategorySerializer, BrandSerializer
+
 
 
 # Функция отображения товаров на главной странице
@@ -24,25 +27,48 @@ def product_list(request, category_slug=None, brand_slug=None):
     Эта функция фильтрует продукты по категории и бренду,
     а также отображает список всех категорий и брендов.
   """
+    start_time = time.time()
     category = None
     brand = None
     categories = Category.objects.all()
     brands = Brand.objects.all()
     products = Product.objects.filter(available=True)
-
     category_slug = request.GET.get("category", category_slug)
     brand_slug = request.GET.get("brand", brand_slug)
+    cache_key = f"product_list_{category_slug}_{brand_slug}"
+    cached_data = cache.get(cache_key)
 
-    if category_slug:
-        category = get_object_or_404(Category, slug=category_slug)
-        products = products.filter(category=category)
+    if cached_data is None:
+        products = Product.objects.filter(available=True)
 
-    if brand_slug:
-        brand = get_object_or_404(Brand, slug=brand_slug)
-        products = products.filter(brand=brand)
+        if category_slug:
+            category = get_object_or_404(Category, slug=category_slug)
+            products = products.filter(category=category)
+
+        if brand_slug:
+            brand = get_object_or_404(Brand, slug=brand_slug)
+            products = products.filter(brand=brand)
+        cached_data = {
+            "category": category,
+            "categories": list(categories),  # QuerySet в список
+            "brand": brand,
+            "brands": list(brands),      
+            "products": list(products),   
+            "category_slug": category_slug,
+            "brand_slug": brand_slug,
+        }
+        cache.set(cache_key, cached_data, timeout=60 * 15)  # Кэш на 15 минут
+    else:
+        # Восстанавливаем данные из кэша
+        category = cached_data["category"]
+        categories = cached_data["categories"]
+        brand = cached_data["brand"]
+        brands = cached_data["brands"]
+        products = cached_data["products"]
+        category_slug = cached_data["category_slug"]
+        brand_slug = cached_data["brand_slug"]
 
     # paginator = Paginator(products, 9)
-
     # page = request.GET.get('page') # Получаем номер текущей страницы
     # try:
     # products = paginator.page(page)
@@ -64,6 +90,8 @@ def product_list(request, category_slug=None, brand_slug=None):
         "brand_slug": brand_slug,
         # 'page': page,                 # Добавляем page в контекст
     }
+    end_time = time.time()
+    print(f"Время выполнения с кэшем: {end_time - start_time:.4f} секунд")
     return render(request, "shop/product/list.html", context)
 
 
@@ -75,8 +103,14 @@ def product_detail(request, slug):
     Эта функция получает информацию о продукте по его slug 
     и отображает ее на странице detail.html.
     """
-    product = get_object_or_404(Product, slug=slug, available=True)
-
+    start_time = time.time()
+    cache_key = f"product_{slug}"
+    product = cache.get(cache_key)
+    if product is None:
+        product = get_object_or_404(Product, slug=slug, available=True)
+        cache.set(cache_key, product, timeout=60*15) # Кэш на 15 минут
+    end_time = time.time()
+    print(f"Время выполнения с кэшем: {end_time - start_time:.4f} секунд")
     return render(
         request,
         "shop/product/detail.html",
