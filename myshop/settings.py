@@ -3,7 +3,6 @@
 """
 from pathlib import Path
 from celery.schedules import crontab
-from datetime import date, timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -50,7 +49,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
+
 
 ROOT_URLCONF = 'myshop.urls'
 
@@ -154,12 +155,11 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_MODULES = ['myshop.tasks.tasks']
-  
 CELERY_BEAT_SCHEDULE = {
     'SKIDKA_CHERNAYA_PYATNICA': {
         'task': 'tasks.tasks.discount_11_11',
         'schedule': crontab(hour=0, minute=0, day_of_month='11,12', month_of_year='11') 
-    }, 
+    },
     'NOVOGODNEE_POZDRAVLENIE': {
         'task': 'tasks.tasks.send_new_year_email',
         'schedule': crontab(hour=0, minute=0, day_of_month='31', month_of_year='12'),
@@ -169,10 +169,17 @@ CELERY_BEAT_SCHEDULE = {
             'Уважаемый клиент! Поздравляем Вас с наступающим Новым годом!'
         ],
     },
- 
 }
 
-   
+CACHES = {
+         'default': {
+             'BACKEND': 'django_redis.cache.RedisCache',
+             'LOCATION': 'redis://redis:6379/0',  
+             'OPTIONS': {
+                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+             }
+         }
+     }
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 2,

@@ -21,6 +21,7 @@ services:
       - DJANGO_SETTINGS_MODULE=myshop.settings
   redis:
     image: redis:alpine
+    hostname: redis
   mailhog:
     image: mailhog/mailhog:latest
     ports:
@@ -31,5 +32,6 @@ services:
     command: celery -A myshop beat -l info
     depends_on:
       - redis
+      - web
     environment:
       - DJANGO_SETTINGS_MODULE=myshop.settings

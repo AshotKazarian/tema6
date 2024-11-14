@@ -1,3 +1,6 @@
+"""
+Настройка Celery для проекта myshop.
+"""
 import os
 from celery import Celery
 
