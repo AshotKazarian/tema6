@@ -1,7 +1,13 @@
+"""
+Задачи для django проекта. Периодические задачи (celery)
+"""
+from datetime import date
 from django.core.mail import send_mail
 from celery import shared_task
-from shop.models import Product  
-from datetime import date, timedelta
+from shop.models import Product
+
+# pylint: disable=no-member
+# pylint: disable=used-before-assignment
 
 @shared_task
 def discount_11_11():
@@ -14,13 +20,12 @@ def discount_11_11():
     november_12th = date(today.year, 11, 12)
 
     products = Product.objects.all()
-    
     current_price = float(product.price)
     discount = float(current_price) * 0.15
 
     # Применение скидки в 00:00 11 ноября каждого года
     if today == november_11th:
-        for product in products:            
+        for product in products:
             new_price = float(current_price) - discount
             product.price = new_price
             product.save()
@@ -53,3 +58,4 @@ def send_new_year_email(recipient_email, subject, message):
     )
 
     return f"Письмо отправлено на {recipient_email}"
+    
