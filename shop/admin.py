@@ -48,7 +48,6 @@ class ProductResource(resources.ModelResource):
             "brand__name",
             "category__name",
             "available",
-            "description",
             "created",
             "updated",
         )
