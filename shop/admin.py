@@ -4,7 +4,7 @@
 
 from django.contrib import admin
 from import_export import resources
-from import_export.admin import ImportExportModelAdmin, ExportActionMixin
+from import_export.admin import ImportExportActionModelAdmin
 from django.utils.safestring import mark_safe
 from .models import Category, Brand, Product
 
@@ -98,7 +98,7 @@ class BrandAdmin(admin.ModelAdmin):
 
 
 @admin.register(Product)
-class ProductAdmin(ImportExportModelAdmin, ExportActionMixin):
+class ProductAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
     """
     Класс для управления товарами в админ-панели.
     """
