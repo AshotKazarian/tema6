@@ -128,8 +128,8 @@ class ProductFilter(django_filters.FilterSet):
     Позволяет фильтровать товары по категории, бренду, доступности, 
     а также минимальной и максимальной цене.
     """
-    min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
-    max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
+    min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
+    max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lt")
 
     class Meta:
         """
