@@ -48,25 +48,7 @@
         <br>
         {{ product.price }} ₽
       </div>
-    {% endfor %}
-		
-		
-		<!-- {% if products.has_other_pages %}
-      <ul class="pagination">
-        {% if products.has_previous %}
-          <li><a href="{% url 'shop:product_list' %}?page={{ products.previous_page_number }}&{% if category_slug %}category={{ category_slug }}&{% endif %}{% if brand_slug %}brand={{ brand_slug }}&{% endif %}">&laquo;</a></li>
-        {% endif %}
-        {% for i in products.paginator.page_range %}
-          <li {% if products.number == i %}class="active"{% endif %}><a href="{% url 'shop:product_list' %}?page={{ i }}&{% if category_slug %}category={{ category_slug }}&{% endif %}{% if brand_slug %}brand={{ brand_slug }}&{% endif %}">{{ i }}</a></li>
-        {% endfor %}
-        {% if products.has_next %}
-          <li><a href="{% url 'shop:product_list' %}?page={{ products.next_page_number }}&{% if category_slug %}category={{ category_slug }}&{% endif %}{% if brand_slug %}brand={{ brand_slug }}&{% endif %}">&raquo;</a></li>
-        {% endif %}
-      </ul>
-    {% endif %} -->
-	
-
-  
+    {% endfor %} 
 		
 		</div>
 		
