@@ -68,18 +68,6 @@ def product_list(request, category_slug=None, brand_slug=None):
         category_slug = cached_data["category_slug"]
         brand_slug = cached_data["brand_slug"]
 
-    # paginator = Paginator(products, 9)
-    # page = request.GET.get('page') # Получаем номер текущей страницы
-    # try:
-    # products = paginator.page(page)
-    # except PageNotAnInteger:
-    # # Если номер страницы не целое число, показываем первую страницу
-    # products = paginator.page(1)
-    # except EmptyPage:
-    # # Если номер страницы превышает максимальное число страниц,
-    # # показываем последнюю страницу
-    # products = paginator.page(paginator.num_pages)
-
     context = {
         "category": category,
         "categories": categories,
@@ -88,7 +76,6 @@ def product_list(request, category_slug=None, brand_slug=None):
         "products": products,
         "category_slug": category_slug,
         "brand_slug": brand_slug,
-        # 'page': page,                 # Добавляем page в контекст
     }
     end_time = time.time()
     print(f"Время выполнения с кэшем: {end_time - start_time:.4f} секунд")
