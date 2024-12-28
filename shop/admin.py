@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe
 from import_export import resources
 from import_export.admin import ImportExportActionModelAdmin
-from .models import Category, Brand, Product
+from .models import Category, Brand, Product, Comment
 
 
 class ProductResource(resources.ModelResource):
@@ -148,4 +148,9 @@ class ProductAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
             return mark_safe("<img src='{}' width='80' />".format(obj.image.url))
         return "Нет изображения"
     image_visible.__name__ = "Изображение"
-    
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ['name', 'product', 'created', 'active']
+    list_filter = ['active', 'created', 'updated']
+    search_fields = ['name', 'body']

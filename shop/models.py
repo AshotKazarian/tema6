@@ -10,6 +10,7 @@
 from django.db import models
 from django.urls import reverse
 from simple_history.models import HistoricalRecords
+from django.contrib.auth.models import User
 
 
 class Category(models.Model):
@@ -29,7 +30,7 @@ class Category(models.Model):
         """
         Мета-информация для модели Category.
         """
-
+        
         ordering = ["name"]
         indexes = [
             models.Index(fields=["name"]),
@@ -67,8 +68,8 @@ class Brand(models.Model):
         """
         Мета-информация для модели Brand.
         """
-
-        ordering = ["name"]
+          
+        ordering = ["name"]  
         indexes = [
             models.Index(fields=["name"]),
         ]
@@ -87,6 +88,13 @@ class Brand(models.Model):
         """
         return reverse("shop:product_list_by_brand", args=[self.slug])
 
+class ProductManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related('category', 'brand')
+
+class CountryProductManager(models.Manager):
+    def get_by_country(self, country_code):
+        return self.get_queryset().filter(country=country_code).select_related('category', 'brand')
 
 class Product(models.Model):
     """
@@ -104,7 +112,13 @@ class Product(models.Model):
         created (DateTimeField): Дата создания товара.
         updated (DateTimeField): Дата обновления товара.
     """
-
+    
+    class Country(models.TextChoices):
+        Russia = 'RU', 'Russia'
+        Germany = 'GE', 'Germany'
+        Japan = 'JP', 'Japan'
+        ND = 'ND', 'No Data'
+        
     category = models.ForeignKey(
         Category,
         related_name="products",
@@ -127,12 +141,19 @@ class Product(models.Model):
     )
     updated = models.DateTimeField(auto_now=True, verbose_name="Дата обновления товара")
     history = HistoricalRecords()
+    country = models.CharField(max_length=2,
+        choices=Country.choices,
+        default=Country.ND,
+        verbose_name="Страна производства")
+        
+    objects = ProductManager() #базовый менеджер
+    country_products = CountryProductManager() #менеджер для товаров по стране
 
     class Meta:
         """
         Мета-информация для модели Product.
         """
-
+        
         ordering = ["name"]
         indexes = [
             models.Index(fields=["slug"]),
@@ -153,3 +174,27 @@ class Product(models.Model):
         Возвращает абсолютный URL для страницы детализации товара.
         """
         return reverse("shop:product_detail", args=[self.slug])
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=30, blank=True)
+
+class Comment(models.Model):
+    product = models.ForeignKey(Product,
+                             on_delete=models.CASCADE,
+                             related_name='comments')
+    name = models.CharField(max_length=80)
+    body = models.TextField(verbose_name="")
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['created']
+        indexes = [
+            models.Index(fields=['created']),
+        ]
+
+    def __str__(self):
+        return f"Comment by {self.name} on {self.product}"
+        

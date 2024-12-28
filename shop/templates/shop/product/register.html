@@ -1,0 +1,15 @@
+{% extends "shop/base.html" %}
+
+{% block title %}
+  Регистрация | Магазин бытовой техники
+{% endblock %}
+
+{% block content %}
+  <h1>Регистрация</h1>
+  <p>Для создания нового профиля заполните следующие поля:</p>
+  <form method="post">
+    {{ user_form.as_p }}
+    {% csrf_token %}
+    <p><input type="submit" value="Создать профиль"></p>
+  </form>
+{% endblock %}

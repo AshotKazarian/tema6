@@ -1,0 +1,11 @@
+    {% extends 'shop/base.html' %}
+
+    {% block content %}
+        <h2>Редактировать комментарий</h2>
+        <form method="post" action="{% url 'shop:submit_edit_comment' comment_id=comment.id %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+             <button type="submit">Сохранить</button>
+             <a href="{% url 'shop:product_detail' slug=comment.product.slug %}">Отмена</a>
+        </form>
+    {% endblock %}

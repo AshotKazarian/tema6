@@ -10,10 +10,15 @@
     <div id="header">
       <a href="/" class="logo">Магазин бытовой техники</a>
     </div>
-    <div id="subheader">
-      <div class="cart">
-        <!-- Корзина -->
-      </div>
+    <div id="subheader">     
+			 {% if request.user.is_authenticated %}
+			 <p>Вы авторизованы как <b>{{ user.get_full_name }}</b> (<a href="{% url 'shop:logout' %}">Выход из профиля</a>)</p>
+			 
+			 {% else %}
+			 <div class="login">
+			 <a href="{% url 'shop:login' %}">Вход в профиль</a>
+			 {% endif %}
+			</div>
     </div>
     <div id="content">
       {% block content %}

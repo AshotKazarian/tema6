@@ -1,0 +1,16 @@
+{% extends "shop/base.html" %}
+
+{% block title %}
+  Авторизация | Магазин бытовой техники
+{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'shop:register' %}">Нет профиля? Зарегистрируйтесь!</a></p>
+  <h1>Авторизация</h1>
+   <p>Для входа введите логин и пароль</p>
+   <form method="post">
+    {{ form.as_p }}
+    {% csrf_token %}
+     <p><input type="submit" value="Войти"></p>
+   </form>
+{% endblock %}

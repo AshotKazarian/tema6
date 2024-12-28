@@ -1,5 +1,8 @@
 {% extends "shop/base.html" %}
+{% load blog_tags %}
 {% load static %}
+
+
 
 {% block title %}
   {% if category %}{{ category.name }} | Магазин бытовой техники{% elif brand %}{{ brand.name }} | Магазин бытовой техники{% else %}Каталог | Магазин бытовой техники{% endif %}
@@ -8,7 +11,8 @@
 {% block content %}
   <div id="sidebar">
     
-    <h3>Категории</h3>
+    <h3>Категории: {% total_products_by_category %}
+</h3>
     <ul>
       <li {% if not category %} class="selected"{% endif %} >
       <a href="{% url 'shop:product_list' %}?{% if brand_slug %}brand={{ brand_slug }}{% endif %}">Все категории</a>
@@ -20,7 +24,7 @@
       {% endfor %}
     </ul>
     
-    <h3>Бренды</h3>
+    <h3>Бренды: {% total_products_by_brand %}</h3>
     <ul>
       <li {% if not brand %} class="selected"{% endif %} >
       <a href="{% url 'shop:product_list' %}?{% if category_slug %}category={{ category_slug }}{% endif %}">Все бренды</a>
@@ -36,8 +40,10 @@
   <div id="main" class="product-list">
 	
     <h1>
-  {% if category %}{{ category.name }}{% elif brand %}{{ brand.name }}{% else %}Каталог{% endif %}
+  {% if category %}{{ category.name }}{% elif brand %}{{ brand.name }}{% else %}Каталог: {% total_products %} товаров{% endif %}
 	  </h1>
+		
+		
 
     {% for product in products %}
       <div class="item">
@@ -48,10 +54,24 @@
         <br>
         {{ product.price }} ₽
       </div>
+
     {% endfor %} 
 		
-		</div>
+		{% if products.has_other_pages %}
+      <ul class="pagination">
+        {% if products.has_previous %}
+          <li><a href="{% url 'shop:product_list' %}?page={{ products.previous_page_number }}&{% if category_slug %}category={{ category_slug }}&{% endif %}{% if brand_slug %}brand={{ brand_slug }}&{% endif %}">&laquo;</a></li>
+        {% endif %}
+        {% for i in products.paginator.page_range %}
+          <li {% if products.number == i %}class="active"{% endif %}><a href="{% url 'shop:product_list' %}?page={{ i }}&{% if category_slug %}category={{ category_slug }}&{% endif %}{% if brand_slug %}brand={{ brand_slug }}&{% endif %}">{{ i }}</a></li>
+        {% endfor %}
+        {% if products.has_next %}
+          <li><a href="{% url 'shop:product_list' %}?page={{ products.next_page_number }}&{% if category_slug %}category={{ category_slug }}&{% endif %}{% if brand_slug %}brand={{ brand_slug }}&{% endif %}">&raquo;</a></li>
+        {% endif %}
+      </ul>
+    {% endif %}
 		
+		</div>
 		
 		
 {% endblock %}

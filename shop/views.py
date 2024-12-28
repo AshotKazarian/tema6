@@ -3,18 +3,25 @@
 """
 import time
 import django_filters
+from django.urls import reverse
 from rest_framework import viewsets, serializers, status
 from rest_framework.filters import SearchFilter  # , OrderingFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 # для рендеринга шаблонов и получения объектов из базы данных.
-# from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator
 from django.core.cache import cache
 from django.utils import timezone
-from .models import Category, Product, Brand
+from django.db.models import OrderBy
+from django.http import HttpResponse, HttpResponseForbidden
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+from .forms import LoginForm, UserRegistrationForm, CommentForm
+from django.views.decorators.http import require_POST
+from .models import Category, Product, Brand, Profile, Comment
 from .serializers import ProductSerializer, CategorySerializer, BrandSerializer
 
 
@@ -30,9 +37,9 @@ def product_list(request, category_slug=None, brand_slug=None):
     start_time = time.time()
     category = None
     brand = None
-    categories = Category.objects.all()
-    brands = Brand.objects.all()
-    products = Product.objects.filter(available=True)
+    categories = Category.objects.all().exclude(name='test')
+    brands = Brand.objects.all().exclude(name='test')
+    products = Product.objects.filter(available=True).order_by('updated')
     category_slug = request.GET.get("category", category_slug)
     brand_slug = request.GET.get("brand", brand_slug)
     cache_key = f"product_list_{category_slug}_{brand_slug}"
@@ -67,7 +74,21 @@ def product_list(request, category_slug=None, brand_slug=None):
         products = cached_data["products"]
         category_slug = cached_data["category_slug"]
         brand_slug = cached_data["brand_slug"]
+        
+    paginator = Paginator(products, 6)
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        page = 1
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
 
+
+    
     context = {
         "category": category,
         "categories": categories,
@@ -76,11 +97,13 @@ def product_list(request, category_slug=None, brand_slug=None):
         "products": products,
         "category_slug": category_slug,
         "brand_slug": brand_slug,
+        'page': page,   
     }
+    
+    
     end_time = time.time()
     print(f"Время выполнения с кэшем: {end_time - start_time:.4f} секунд")
     return render(request, "shop/product/list.html", context)
-
 
 # Функция отображения одного товара
 def product_detail(request, slug):
@@ -96,6 +119,15 @@ def product_detail(request, slug):
     if product is None:
         product = get_object_or_404(Product, slug=slug, available=True)
         cache.set(cache_key, product, timeout=60*15) # Кэш на 15 минут
+        
+    # Список активных комментариев к этому товару
+    comments = product.comments.filter(active=True).order_by('-created')
+    # Форма для комментирования пользователями
+    form = CommentForm() 
+    
+    # Получаем товары из той же страны
+    similar_products = Product.country_products.get_by_country(product.country).exclude(id=product.id)[:3] 
+         
     end_time = time.time()
     print(f"Время выполнения с кэшем: {end_time - start_time:.4f} секунд")
     return render(
@@ -103,8 +135,11 @@ def product_detail(request, slug):
         "shop/product/detail.html",
         {
             "product": product,
-        },
-    )
+            'comments': comments,
+            'form': form,
+            'similar_products': similar_products,
+        }
+       )
 
 
 # API
@@ -290,3 +325,107 @@ class BrandViewSet(viewsets.ModelViewSet):
 # данные из request.data.
 # 3. put: Метод update (обновление) вызывается для обновления существующего продукта с pk.
 # 4. delete: Метод destroy (удаление) вызывается для удаления продукта с pk.
+
+def user_login(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            user = authenticate(request, username=cd['username'], password=cd['password'])
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    return redirect('shop:product_list')
+                else:
+                    return HttpResponse('Профиль не активен.')
+            else:
+                return HttpResponse('Неверные логин или пароль.')
+    else:
+        form = LoginForm()
+    return render(request, 'shop/product/login.html', {'form': form})
+    
+def user_logout(request):
+    logout(request)
+    return redirect('shop:login')
+
+def register(request):
+    if request.method == 'POST':
+        user_form = UserRegistrationForm(request.POST)
+        if user_form.is_valid():
+            # Create a new user object using the cleaned data from the form
+            new_user = User(
+                username=user_form.cleaned_data['username'],
+                first_name=user_form.cleaned_data['first_name'],
+            )
+            # Set the chosen password
+            new_user.set_password(
+                user_form.cleaned_data['password'])
+            # Save the User object
+            new_user.save()
+            # Create the user profile
+            profile = Profile(user=new_user)
+            profile.first_name = user_form.cleaned_data['first_name']
+            profile.save()
+
+            return redirect('shop:login')
+    else:
+        user_form = UserRegistrationForm()
+    return render(request,
+                  'shop/product/register.html',
+                  {'user_form': user_form})
+
+@require_POST
+def product_comment(request, slug):
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden('Пожалуйста, авторизуйтесь.')
+
+    product = get_object_or_404(Product, slug=slug)
+    comment = None
+    # A comment was posted
+    form = CommentForm(data=request.POST)
+    if form.is_valid():
+        # Create a Comment object without saving it to the database
+        comment = form.save(commit=False)
+        # Assign the post to the comment
+        comment.product = product
+        comment.name = request.user.get_full_name()
+        # Save the comment to the database
+        comment.save()
+    return redirect('shop:product_detail', slug=product.slug)
+
+def edit_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    #Проверка является ли пользователь автором комментария
+    if request.user.get_full_name() != comment.name:
+        return HttpResponseForbidden("Вы не можете редактировать чужие комментарии.")
+    if request.method == 'POST':
+        form = CommentForm(request.POST, instance=comment)
+        if form.is_valid():
+            form.save()
+            return redirect('shop:product_detail', slug=comment.product.slug)
+    else:
+        form = CommentForm(instance=comment)
+    return render(request, 'shop/edit_comment.html', {'form': form, 'comment': comment})
+
+def submit_edit_comment(request, comment_id):
+    if request.method == "POST":
+        comment = get_object_or_404(Comment, id=comment_id)
+    #Проверка является ли пользователь автором комментария
+        if request.user.get_full_name() != comment.name:
+            return HttpResponseForbidden("Вы не можете редактировать чужие комментарии.")
+        form = CommentForm(request.POST, instance=comment)
+        if form.is_valid():
+            form.save()
+        return redirect(reverse('shop:product_detail', kwargs={'slug': comment.product.slug}))
+    else:
+        return HttpResponseForbidden("Доступ запрещен")
+        
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    if request.user.get_full_name() != comment.name:
+      return HttpResponseForbidden("Вы не можете удалять чужие комментарии.")
+    if request.method == 'POST':
+      comment.delete()
+      return redirect('shop:product_detail', slug=comment.product.slug)
+    else:
+      return HttpResponseForbidden("Доступ запрещен")

@@ -17,4 +17,69 @@
     <p class="price">{{ product.price }} ₽</p>
     {{ product.description|linebreaks }}
   </div>
+	
+	
+	<div style="margin-top: 125px;">
+	
+
+<div>
+<h2>Написать комментарий:</h2>
+{% if request.user.is_authenticated %}
+<form style="padding: 0 50px 50px 0" action="{% url "shop:product_comment" product.slug %}" method="post">
+  {{ form.as_p }}
+  {% csrf_token %}
+  <p><input type="submit" value="Отправить"></p>
+</form>
+{% with comments.count as total_comments %}
+	<h2>
+    Всего комментариев: {{ total_comments }}
+  </h2>
+  {% endwith %}
+{% else %}
+<p>Авторизуйтесь, чтобы оставить комментарий.</p>
+{% endif %}
+</div>
+
+{% for comment in comments %}
+
+<div style="border: solid 1px black; padding: 10px; margin-bottom: 20px;" class="comment">
+<p class="info">
+Комментарий от <b>{{ comment.name }}</b> ({{ comment.created|date:"d M Y в H:i" }}):</p>
+ <i>{{ comment.body|linebreaks }}</i>  
+{% if request.user.is_authenticated and request.user.get_full_name == comment.name %}
+                 <a href="{% url 'shop:edit_comment' comment_id=comment.id %}">Редактировать</a>
+           <form method="post" action="{% url 'shop:delete_comment' comment_id=comment.id %}" style="display:inline;">
+                   {% csrf_token %}
+                   <button type="submit">Удалить</button>
+               </form>
+					 {% endif %} 
+</div>
+
+
+{% empty %}
+<p>Пока ещё нет комментариев.</p>
+
+{% endfor %}
+
+
+</div>
+
+	<div style="margin-top: 50px;">
+	    <h2>Вас может заинтересовать</h2>
+        {% if similar_products %}
+            <div class="product-list">
+                {% for similar_product in similar_products %}
+                    <div class="similar-product item">
+                        <a href="{{ similar_product.get_absolute_url }}">
+                            <img src="{% if similar_product.image %}{{ similar_product.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}" alt="{{ similar_product.name }}"  width="150px">
+                            <p>{{ similar_product.name }}</p>
+                        </a>
+                    </div>
+                 {% endfor %}
+            </div>
+        {% else %}
+          <p>Нет похожих товаров из той же страны</p>
+        {% endif %}
+</div>
+
 {% endblock %}

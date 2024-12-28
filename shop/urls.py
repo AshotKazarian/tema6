@@ -31,15 +31,17 @@ router.register("categories", views.CategoryViewSet)
 
 urlpatterns = [
     path("", views.product_list, name="product_list"),
-    path(
-        "category/<slug:category_slug>/",
-        views.product_list,
-        name="product_list_by_category",
-    ),
+    path("category/<slug:category_slug>/", views.product_list, name="product_list_by_category"),
     path("brand/<slug:brand_slug>/", views.product_list, name="product_list_by_brand"),
     path("api/", include(router.urls)),
-    path('swagger/', SchemaView.with_ui('swagger', cache_timeout=0),
-name='schema-swagger-ui'),
+    path('swagger/', SchemaView.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('login/', views.user_login, name='login'),
+    path('logout/', views.user_logout, name='logout'),
+    path('register/', views.register, name='register'),
+    path('<slug:slug>/comment/', views.product_comment, name='product_comment'),
+    path('edit_comment/<int:comment_id>/', views.edit_comment, name='edit_comment'),
+    path('submit_edit_comment/<int:comment_id>/', views.submit_edit_comment, name='submit_edit_comment'),
+    path('delete_comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
     path("<slug:slug>/", views.product_detail, name="product_detail"),
 ]
 
