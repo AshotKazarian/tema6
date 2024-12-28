@@ -114,10 +114,10 @@ class Product(models.Model):
     """
     
     class Country(models.TextChoices):
-        Russia = 'RU', 'Russia'
-        Germany = 'GE', 'Germany'
-        Japan = 'JP', 'Japan'
-        ND = 'ND', 'No Data'
+        Russia = 'RU', 'Россия'
+        Germany = 'GE', 'Германия'
+        Japan = 'JP', 'Япония'
+        ND = 'ND', 'Нет данных'
         
     category = models.ForeignKey(
         Category,
@@ -174,6 +174,13 @@ class Product(models.Model):
         Возвращает абсолютный URL для страницы детализации товара.
         """
         return reverse("shop:product_detail", args=[self.slug])
+        
+    @property
+    def country_name(self):
+        """
+        Возвращает название страны производства товара.
+        """
+        return self.get_country_display()
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -194,6 +201,8 @@ class Comment(models.Model):
         indexes = [
             models.Index(fields=['created']),
         ]
+        verbose_name = "Комментарий"
+        verbose_name_plural = "Комментарии"
 
     def __str__(self):
         return f"Comment by {self.name} on {self.product}"

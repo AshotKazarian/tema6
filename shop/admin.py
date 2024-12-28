@@ -95,6 +95,8 @@ class BrandAdmin(admin.ModelAdmin):
     list_display = ["name", "slug"]
     prepopulated_fields = {"slug": ("name",)}
 
+class CommentInline(admin.StackedInline):
+    model = Comment
 
 @admin.register(Product)
 class ProductAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
@@ -129,6 +131,10 @@ class ProductAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
         "updated",
     )
     date_hierarchy = "updated"
+    
+    inlines = [
+        CommentInline,
+    ]
 
     def get_short_description(self, obj):
         """
@@ -154,3 +160,4 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ['name', 'product', 'created', 'active']
     list_filter = ['active', 'created', 'updated']
     search_fields = ['name', 'body']
+    

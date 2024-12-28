@@ -335,6 +335,7 @@ def user_login(request):
             if user is not None:
                 if user.is_active:
                     login(request, user)
+                    request.session.set_expiry(600)
                     return redirect('shop:product_list')
                 else:
                     return HttpResponse('Профиль не активен.')
