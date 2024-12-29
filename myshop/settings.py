@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'mailhog',
     'django_celery_beat',
     'django_celery_results',
+    'wkhtmltopdf',
 ]
 
 # SIMPLE_HISTORY_REVERT_DISABLED = True
@@ -184,4 +185,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 2,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
+
+WKHTMLTOPDF_CMD_OPTIONS = {
+    'quiet': True,
 }

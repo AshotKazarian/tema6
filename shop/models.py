@@ -148,6 +148,9 @@ class Product(models.Model):
         
     objects = ProductManager() #базовый менеджер
     country_products = CountryProductManager() #менеджер для товаров по стране
+    
+    file = models.FileField(upload_to='product_files/', blank=True, null=True)
+    url = models.URLField(blank=True, null=True)
 
     class Meta:
         """
@@ -195,6 +198,7 @@ class Comment(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=True)
+    image = models.ImageField(upload_to='comment_images/', blank=True, null=True, verbose_name="Изображение")
 
     class Meta:
         ordering = ['created']

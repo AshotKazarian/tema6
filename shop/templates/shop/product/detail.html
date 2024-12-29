@@ -26,19 +26,22 @@
 <div>
 <h2>Написать комментарий:</h2>
 {% if request.user.is_authenticated %}
-<form style="padding: 0 50px 50px 0" action="{% url "shop:product_comment" product.slug %}" method="post">
+<form style="padding: 0 50px 50px 0" action="{% url "shop:product_comment" product.slug %}" method="post" enctype="multipart/form-data">
   {{ form.as_p }}
   {% csrf_token %}
   <p><input type="submit" value="Отправить"></p>
 </form>
+{% else %}
+<p>Авторизуйтесь, чтобы оставить комментарий.</p>
+{% endif %}
 {% with comments.count as total_comments %}
+<br>
+<br>
+<br>
 	<h2>
     Всего комментариев: {{ total_comments }}
   </h2>
   {% endwith %}
-{% else %}
-<p>Авторизуйтесь, чтобы оставить комментарий.</p>
-{% endif %}
 </div>
 
 {% for comment in comments %}
@@ -47,7 +50,12 @@
 <p class="info">
 Комментарий от <b>{{ comment.name }}</b> ({{ comment.created|date:"d M Y в H:i" }}):</p>
  <i>{{ comment.body|linebreaks }}</i>  
+ {% if comment.image %}
+            <img src="{{ comment.image.url }}" alt="Изображение пользователя" style="max-width: 250px;">
+        {% endif %}
 {% if request.user.is_authenticated and request.user.get_full_name == comment.name %}
+<br>
+<br>
                  <a href="{% url 'shop:edit_comment' comment_id=comment.id %}">Редактировать</a>
            <form method="post" action="{% url 'shop:delete_comment' comment_id=comment.id %}" style="display:inline;">
                    {% csrf_token %}

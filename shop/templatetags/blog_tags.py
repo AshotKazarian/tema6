@@ -10,9 +10,9 @@ def total_products():
 @register.simple_tag(takes_context=True)
 def total_products_by_category(context):
     category = context['category']
-    return Category.objects.all().count()
+    return Category.objects.all().exclude(name__icontains='test').count()
 
 @register.simple_tag(takes_context=True)
 def total_products_by_brand(context):
     brand = context['brand']
-    return Brand.objects.all().count()
+    return Brand.objects.all().exclude(name__icontains='test').count()

@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.forms import ModelForm, Textarea
 from .models import Comment
 
 class LoginForm(forms.Form):
@@ -26,4 +27,7 @@ class UserRegistrationForm(forms.ModelForm):
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
-        fields = ['body']
+        fields = ['body', 'image']
+        widgets = {
+            "body": Textarea(attrs={"cols": 75, "rows": 10}),
+        }

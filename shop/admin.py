@@ -6,6 +6,12 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe
 from import_export import resources
 from import_export.admin import ImportExportActionModelAdmin
+from django.utils import timezone
+from django.http import FileResponse
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
 from .models import Category, Brand, Product, Comment
 
 
@@ -154,10 +160,60 @@ class ProductAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
             return mark_safe("<img src='{}' width='80' />".format(obj.image.url))
         return "Нет изображения"
     image_visible.__name__ = "Изображение"
+    
+    def make_unavailable(self, request, queryset):
+        """
+        Действие для установки доступности товара в "Нет в наличии".
+        """
+        updated_count = queryset.update(available=False)
+        self.message_user(request, f"{updated_count} товара(ов) отмечены как 'Нет в наличии'.")
+
+    def make_available(self, request, queryset):
+         """
+         Действие для установки доступности товара в "Есть в наличии".
+         """
+         updated_count = queryset.update(available=True)
+         self.message_user(request, f"{updated_count} товара(ов) отмечены как 'Есть в наличии'.")
+    
+    def generate_pdf(self, request, queryset):
+        """
+        Действие для генерации PDF-документа с информацией о выбранных товарах.
+        """
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=letter)
+        y_position = 10.5 * inch  # Начальная позиция по оси Y
+
+        for product in queryset:
+            textobject = p.beginText()
+            textobject.setTextOrigin(inch, y_position)  # Устанавливаем позицию текста
+            textobject.setFont("Helvetica", 12)
+            textobject.textLine(f"Name: {product.name}")
+            textobject.textLine(f"Price, RUB: {product.price}")
+            textobject.textLine(f"Brand: {product.brand.name}")
+            textobject.textLine(f"Category: {product.category.slug}")
+            textobject.textLine(f"Available: {'Yes' if product.available else 'No'}")
+            textobject.textLine("-" * 30)
+
+            p.drawText(textobject)
+            y_position -= 1.5 * inch  # Корректируем позицию для следующей записи
+            
+            if y_position <= inch:  # Проверяем не ушли ли мы вниз страницы
+                p.showPage()  # Начинаем новую страницу
+                y_position = 10.5 * inch  # Возвращаем позицию к началу новой страницы
+
+        p.save()
+
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename='products.pdf')
+    
+    make_unavailable.short_description = "Отметить как 'Нет в наличии'"
+    make_available.short_description = "Отметить как 'Есть в наличии'"
+    generate_pdf.short_description = "Сгенерировать PDF"    
+    actions = ['make_unavailable', 'make_available', 'generate_pdf']
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ['name', 'product', 'created', 'active']
+    list_display = ['name', 'product', 'body', 'created', 'active']
     list_filter = ['active', 'created', 'updated']
     search_fields = ['name', 'body']
     

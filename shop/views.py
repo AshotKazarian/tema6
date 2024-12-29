@@ -37,16 +37,16 @@ def product_list(request, category_slug=None, brand_slug=None):
     start_time = time.time()
     category = None
     brand = None
-    categories = Category.objects.all().exclude(name='test')
-    brands = Brand.objects.all().exclude(name='test')
-    products = Product.objects.filter(available=True).order_by('updated')
+    categories = Category.objects.all().exclude(name__icontains='test')
+    brands = Brand.objects.all().exclude(name__icontains='test')
+    products = Product.objects.filter(available=True).prefetch_related('category', 'brand')
     category_slug = request.GET.get("category", category_slug)
     brand_slug = request.GET.get("brand", brand_slug)
     cache_key = f"product_list_{category_slug}_{brand_slug}"
     cached_data = cache.get(cache_key)
 
     if cached_data is None:
-        products = Product.objects.filter(available=True)
+        products = Product.objects.filter(available=True).prefetch_related('category', 'brand')
 
         if category_slug:
             category = get_object_or_404(Category, slug=category_slug)
@@ -213,11 +213,17 @@ class ProductViewSet(viewsets.ModelViewSet):
         available_count = self.get_queryset().filter(available=True).count()
         unavailable_count = self.get_queryset().filter(available=False).count()
         category_count = (
-            self.get_queryset().values("category__name").annotate(count=Count("id"))
-        )
+        self.get_queryset()
+        .select_related('category', 'brand')
+        .values("category__name")
+        .annotate(count=Count("id"))
+    )
         brand_count = (
-            self.get_queryset().values("brand__name").annotate(count=Count("id"))
-        )
+        self.get_queryset()
+        .select_related('category', 'brand')
+        .values("brand__name")
+        .annotate(count=Count("id"))
+    )
 
         return Response(
             {
@@ -383,7 +389,7 @@ def product_comment(request, slug):
     product = get_object_or_404(Product, slug=slug)
     comment = None
     # A comment was posted
-    form = CommentForm(data=request.POST)
+    form = CommentForm(request.POST, request.FILES)
     if form.is_valid():
         # Create a Comment object without saving it to the database
         comment = form.save(commit=False)
@@ -400,7 +406,7 @@ def edit_comment(request, comment_id):
     if request.user.get_full_name() != comment.name:
         return HttpResponseForbidden("Вы не можете редактировать чужие комментарии.")
     if request.method == 'POST':
-        form = CommentForm(request.POST, instance=comment)
+        form = CommentForm(request.POST, request.FILES, instance=comment)
         if form.is_valid():
             form.save()
             return redirect('shop:product_detail', slug=comment.product.slug)
@@ -414,7 +420,7 @@ def submit_edit_comment(request, comment_id):
     #Проверка является ли пользователь автором комментария
         if request.user.get_full_name() != comment.name:
             return HttpResponseForbidden("Вы не можете редактировать чужие комментарии.")
-        form = CommentForm(request.POST, instance=comment)
+        form = CommentForm(request.POST, request.FILES, instance=comment)
         if form.is_valid():
             form.save()
         return redirect(reverse('shop:product_detail', kwargs={'slug': comment.product.slug}))
