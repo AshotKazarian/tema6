@@ -42,6 +42,7 @@ urlpatterns = [
     path('edit_comment/<int:comment_id>/', views.edit_comment, name='edit_comment'),
     path('submit_edit_comment/<int:comment_id>/', views.submit_edit_comment, name='submit_edit_comment'),
     path('delete_comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
+    path('visits/', views.visit_list, name='visit_list'),
     path("<slug:slug>/", views.product_detail, name="product_detail"),
 ]
 

@@ -12,7 +12,7 @@ from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
-from .models import Category, Brand, Product, Comment
+from .models import Category, Brand, Product, Comment, Profile, Visit
 
 
 class ProductResource(resources.ModelResource):
@@ -125,7 +125,8 @@ class ProductAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
     list_editable = ["price", "available"]
     prepopulated_fields = {"slug": ("name",)}
     list_display_links = ["name"]
-    # raw_id_fields = ('category', 'brand')
+    raw_id_fields = ('category', 'brand')
+    # filter_horizontal = ['country']
     # readonly_fields = ('slug',)
     search_fields = (
         "name",
@@ -217,3 +218,8 @@ class CommentAdmin(admin.ModelAdmin):
     list_filter = ['active', 'created', 'updated']
     search_fields = ['name', 'body']
     
+@admin.register(Visit)
+class VisittAdmin(admin.ModelAdmin):
+    list_display = ['user', 'visit_url', 'visit_time']
+    list_filter = ['user']
+    search_fields = ['user', 'visit_url', 'visit_time']

@@ -15,16 +15,32 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.core.cache import cache
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 from django.db.models import OrderBy
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from .forms import LoginForm, UserRegistrationForm, CommentForm
 from django.views.decorators.http import require_POST
-from .models import Category, Product, Brand, Profile, Comment
+from .models import Category, Product, Brand, Profile, Comment, Visit
 from .serializers import ProductSerializer, CategorySerializer, BrandSerializer
 
+def record_visit(request):
+    if request.user.is_authenticated:
+        Visit.objects.create(
+            user=request.user,
+            visit_url=request.path,
+            visit_time=timezone.now()
+        )
 
+      
+def visit_list(request):
+    if request.user.is_authenticated and request.user.is_staff:
+        visits = Visit.objects.order_by('-visit_time')
+        return render(request, 'shop/product/visit_list.html', {'visits': visits}) 
+    else:
+        return HttpResponse('Данная страница предназначена для персонала.')
+        
 
 # Функция отображения товаров на главной странице
 def product_list(request, category_slug=None, brand_slug=None):
@@ -37,8 +53,8 @@ def product_list(request, category_slug=None, brand_slug=None):
     start_time = time.time()
     category = None
     brand = None
-    categories = Category.objects.all().exclude(name__icontains='test')
-    brands = Brand.objects.all().exclude(name__icontains='test')
+    categories = Category.objects.exclude(name__icontains='test')
+    brands = Brand.objects.exclude(name__icontains='test')
     products = Product.objects.filter(available=True).prefetch_related('category', 'brand')
     category_slug = request.GET.get("category", category_slug)
     brand_slug = request.GET.get("brand", brand_slug)
@@ -86,8 +102,8 @@ def product_list(request, category_slug=None, brand_slug=None):
         products = paginator.page(1)
     except EmptyPage:
         products = paginator.page(paginator.num_pages)
-
-
+    
+    record_visit(request) 
     
     context = {
         "category": category,
@@ -127,6 +143,8 @@ def product_detail(request, slug):
     
     # Получаем товары из той же страны
     similar_products = Product.country_products.get_by_country(product.country).exclude(id=product.id)[:3] 
+         
+    record_visit(request)   
          
     end_time = time.time()
     print(f"Время выполнения с кэшем: {end_time - start_time:.4f} секунд")
@@ -213,16 +231,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         available_count = self.get_queryset().filter(available=True).count()
         unavailable_count = self.get_queryset().filter(available=False).count()
         category_count = (
-        self.get_queryset()
-        .select_related('category', 'brand')
-        .values("category__name")
-        .annotate(count=Count("id"))
+        self.get_queryset().select_related('category', 'brand').values("category__name").annotate(count=Count("id"))
     )
         brand_count = (
-        self.get_queryset()
-        .select_related('category', 'brand')
-        .values("brand__name")
-        .annotate(count=Count("id"))
+        self.get_queryset().select_related('category', 'brand').values("brand__name").annotate(count=Count("id"))
     )
 
         return Response(
@@ -333,6 +345,7 @@ class BrandViewSet(viewsets.ModelViewSet):
 # 4. delete: Метод destroy (удаление) вызывается для удаления продукта с pk.
 
 def user_login(request):
+    record_visit(request) 
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -352,10 +365,12 @@ def user_login(request):
     return render(request, 'shop/product/login.html', {'form': form})
     
 def user_logout(request):
+    record_visit(request) 
     logout(request)
     return redirect('shop:login')
 
 def register(request):
+    record_visit(request) 
     if request.method == 'POST':
         user_form = UserRegistrationForm(request.POST)
         if user_form.is_valid():
@@ -383,6 +398,7 @@ def register(request):
 
 @require_POST
 def product_comment(request, slug):
+    record_visit(request) 
     if not request.user.is_authenticated:
         return HttpResponseForbidden('Пожалуйста, авторизуйтесь.')
 
@@ -401,6 +417,7 @@ def product_comment(request, slug):
     return redirect('shop:product_detail', slug=product.slug)
 
 def edit_comment(request, comment_id):
+    record_visit(request) 
     comment = get_object_or_404(Comment, id=comment_id)
     #Проверка является ли пользователь автором комментария
     if request.user.get_full_name() != comment.name:
@@ -415,6 +432,7 @@ def edit_comment(request, comment_id):
     return render(request, 'shop/edit_comment.html', {'form': form, 'comment': comment})
 
 def submit_edit_comment(request, comment_id):
+    record_visit(request) 
     if request.method == "POST":
         comment = get_object_or_404(Comment, id=comment_id)
     #Проверка является ли пользователь автором комментария
@@ -428,6 +446,7 @@ def submit_edit_comment(request, comment_id):
         return HttpResponseForbidden("Доступ запрещен")
         
 def delete_comment(request, comment_id):
+    record_visit(request) 
     comment = get_object_or_404(Comment, id=comment_id)
     if request.user.get_full_name() != comment.name:
       return HttpResponseForbidden("Вы не можете удалять чужие комментарии.")

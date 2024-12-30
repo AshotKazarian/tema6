@@ -1,0 +1,23 @@
+{% extends "shop/base.html" %}
+
+{% block content %}
+    <h2>История посещений</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Пользователь</th>
+                <th>Страница</th>
+                <th>Время посещения</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for visit in visits %}
+                <tr>
+                    <td>{{ visit.user.username }}</td>
+                    <td>{{ visit.visit_url }}</td>
+                    <td>{{ visit.visit_time }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -16,3 +16,6 @@ def total_products_by_category(context):
 def total_products_by_brand(context):
     brand = context['brand']
     return Brand.objects.all().exclude(name__icontains='test').count()
+    
+    
+#с переменными

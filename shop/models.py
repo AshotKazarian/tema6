@@ -12,7 +12,7 @@ from django.urls import reverse
 from simple_history.models import HistoricalRecords
 from django.contrib.auth.models import User
 
-
+#manyTomany
 class Category(models.Model):
     """
     Модель для представления категории товаров.
@@ -188,6 +188,20 @@ class Product(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=30, blank=True)
+    
+    class Meta:
+        ordering = ['first_name']
+        indexes = [
+            models.Index(fields=['user']),
+        ]
+        verbose_name = "Профиль"
+        verbose_name_plural = "Профили"
+
+    def __str__(self):
+        return str(self.user)
+
+
+
 
 class Comment(models.Model):
     product = models.ForeignKey(Product,
@@ -211,3 +225,20 @@ class Comment(models.Model):
     def __str__(self):
         return f"Comment by {self.name} on {self.product}"
         
+class Visit(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Имя пользователя")
+    visit_url = models.CharField(max_length=255, verbose_name="Страница")
+    visit_time = models.DateTimeField(auto_now_add=True, verbose_name="Время посещения")
+    
+    class Meta:
+        ordering = ['-visit_time']
+        indexes = [
+            models.Index(fields=['-visit_time']),
+        ]
+        verbose_name = "Логирование посещений"
+        verbose_name_plural = "Логирование посещений"
+
+    def __str__(self):
+        return f"{self.user} - {self.visit_url} - {self.visit_time}"
+
+
