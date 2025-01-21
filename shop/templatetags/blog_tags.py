@@ -5,17 +5,19 @@ register = template.Library()
 
 @register.simple_tag
 def total_products():
-    return Product.objects.all().count() 
+    return Product.objects.count() 
 
 @register.simple_tag(takes_context=True)
 def total_products_by_category(context):
     category = context['category']
-    return Category.objects.all().exclude(name__icontains='test').count()
+    return Category.objects.exclude(name__icontains='test').count()
 
 @register.simple_tag(takes_context=True)
 def total_products_by_brand(context):
     brand = context['brand']
-    return Brand.objects.all().exclude(name__icontains='test').count()
+    return Brand.objects.exclude(name__icontains='test').count()
     
-    
-#с переменными
+@register.inclusion_tag('shop/includes/new_products.html')
+def new_products():
+    products = Product.objects.order_by('-created')[:3]
+    return {'new_products': products}

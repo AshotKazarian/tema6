@@ -223,6 +223,7 @@ ul.errorlist {
 		border: solid 1px #5993bb;
 	  text-align:center;
 	  width:30%;
+		margin: 0 20px 20px 0;
 }
 
 .product-detail h1 {

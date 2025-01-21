@@ -84,7 +84,7 @@ DATABASES = {
         'NAME': 'tech_shop',
         'USER': 'postgres',
         'PASSWORD': 'nikosha2021',
-        'HOST': '192.168.0.108',
+        'HOST': '192.168.0.111',
         'PORT': '5432',
     }
 }
@@ -146,7 +146,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = '192.168.0.108'
+EMAIL_HOST = '192.168.0.111'
 EMAIL_PORT = 1025  # SMTP port of Mailhog
 EMAIL_USE_TLS = False
 

@@ -60,6 +60,8 @@ def product_list(request, category_slug=None, brand_slug=None):
     brand_slug = request.GET.get("brand", brand_slug)
     cache_key = f"product_list_{category_slug}_{brand_slug}"
     cached_data = cache.get(cache_key)
+    
+    
 
     if cached_data is None:
         products = Product.objects.filter(available=True).prefetch_related('category', 'brand')
@@ -80,7 +82,7 @@ def product_list(request, category_slug=None, brand_slug=None):
             "category_slug": category_slug,
             "brand_slug": brand_slug,
         }
-        cache.set(cache_key, cached_data, timeout=60 * 15)  # Кэш на 15 минут
+        cache.set(cache_key, cached_data, timeout=60 * 5)  # Кэш на 15 минут
     else:
         # Восстанавливаем данные из кэша
         category = cached_data["category"]
@@ -134,7 +136,7 @@ def product_detail(request, slug):
     product = cache.get(cache_key)
     if product is None:
         product = get_object_or_404(Product, slug=slug, available=True)
-        cache.set(cache_key, product, timeout=60*15) # Кэш на 15 минут
+        cache.set(cache_key, product, timeout=60*5) # Кэш на 15 минут
         
     # Список активных комментариев к этому товару
     comments = product.comments.filter(active=True).order_by('-created')

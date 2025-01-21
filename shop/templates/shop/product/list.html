@@ -37,7 +37,13 @@
     </ul>
     
   </div>
-  <div id="main" class="product-list">
+  
+	<div id="main" class="product-list">
+            <h1>Новинки</h1>
+            {% new_products %}
+  </div>
+	
+	<div id="main" class="product-list">
 	
     <h1>
   {% if category %}{{ category.name }}{% elif brand %}{{ brand.name }}{% else %}Каталог: {% total_products %} товаров{% endif %}

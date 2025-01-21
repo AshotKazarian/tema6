@@ -1,0 +1,11 @@
+{% load static %}
+{% for product in new_products %}
+ <div class="item">
+  <a href="{{ product.get_absolute_url }}">
+   <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}" alt="Фото {{ product.name }}">
+  </a>
+  <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+   <br>
+    {{ product.price }} ₽
+ </div>
+{% endfor %}
